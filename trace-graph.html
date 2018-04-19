@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Trace Graph</title>
+
+  <script src="viz-1.8.0.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ramda/0.24.1/ramda.min.js"></script>
+  <script type="text/javascript" src="trace-graph.js"></script>
+
+  <style>
+    table {
+      border-collapse: collapse;
+      margin: 20px 0px 0px 0px;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+  <form>
+    API Key: <input type="text" id="apiKey" size="65"/><br/>
+    Trace URL: <input type="text" id="traceUrl" size=128"/><br/>
+    <button type="button" onClick="load();">Load Trace</button>
+  </form>
+  <div id="traceGraph"></div>
+  <div id="eventTables"></div>
+</body>
+
+</html>
