@@ -20,14 +20,14 @@
   </style>
 </head>
 
-<body>
-  <form>
+<body style="background:#171f22;font-family:'Open Sans', 'Helvetica Neue', Helvetica, sans-serif;">
+  <form style="color:white">
     API Key: <input type="text" id="apiKey" size="65"/><br/>
     Trace URL: <input type="text" id="traceUrl" size=128"/><br/>
     <button type="button" onClick="load();">Load Trace</button>
   </form>
-  <div id="traceGraph"></div>
-  <div id="eventTables"></div>
+  <div id="traceGraph" style="position:absolute;top:0px;bottom:0px;left:0px;right:0px;margin-top:150px;margin-left:35px;margin-right:35px;background:#171f22;zoom:.75;overflow:scroll"></div>
+  <div id="eventTables" style="display:none"></div>
 </body>
 
 </html>
