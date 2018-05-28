@@ -7,6 +7,7 @@
   <script src="viz-1.8.0.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ramda/0.24.1/ramda.min.js"></script>
   <script type="text/javascript" src="trace-graph.js"></script>
+  <link rel="stylesheet" type="text/css" href="style.css">
 
   <style>
     table {
@@ -20,13 +21,20 @@
   </style>
 </head>
 
-<body style="background:#171f22;font-family:'Open Sans', 'Helvetica Neue', Helvetica, sans-serif;">
+<body style="overflow:none;background:#171f22;font-family:'Open Sans', 'Helvetica Neue', Helvetica, sans-serif;">
   <form style="color:white">
     API Key: <input type="text" id="apiKey" size="65"/><br/>
     Trace URL: <input type="text" id="traceUrl" size=128"/><br/>
     <button type="button" onClick="load();">Load Trace</button>
+	<button type="button" onClick="auto_zoom();">Reset zoom</button>
   </form>
-  <div id="traceGraph" style="position:absolute;top:0px;bottom:0px;left:0px;right:0px;margin-top:150px;margin-left:35px;margin-right:35px;background:#171f22;zoom:.75;overflow:scroll"></div>
+  <div class="slidecontainer"  style="margin-bottom:50px">
+  <input type="range" min="0" max="100" value="50" id="myRange">
+  </div>
+  <div id="Services" style="border-radius:2px;padding:0px;position:fixed;z-index:500;top:20px;right:20px;width:20%;height:auto;background:#fff"> </div>
+  <div id="graph_container" style="border-style: solid;z-index:2;position:absolute;top:150px;bottom:0px;left:0px;right:0px;overflow:scroll;margin-left:50px;margin-right:50px;margin-bottom:50px;padding:20px">
+  <div id="traceGraph" style="z-index:2;position:relative;height:100%;width:100%;background:#171f22;zoom:.75"></div>
+</div>
   <div id="eventTables" style="display:none"></div>
 </body>
 
