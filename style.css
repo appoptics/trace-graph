@@ -2,6 +2,27 @@
     width: 100%; /* Width of the outside container */
 }
 
+.button2 {
+    background-color:transparent; /* Width of the outside container */
+    border:1px solid #414141;
+    font-size: .8em;
+    color:#fff;
+    height:25px;
+    line-height:23px;
+}
+table {
+  border-collapse: collapse;
+  margin: 20px 0px 0px 0px;
+}
+
+table, th, td {
+  border: 1px solid #cecece;
+}
+.button2:focus {
+  background-color:hsla(197,72%,38%,1.00);
+  outline:none;
+}
+
 /* The slider itself */
 .slider {
     -webkit-appearance: none;  /* Override default CSS styles */
