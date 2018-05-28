@@ -94,9 +94,9 @@ function load() {
       fields_to_array(events,dimension);
       graph.innerHTML = svg(events);
       eventTablesDiv.innerHTML = eventTables(events);
-	    show_legend();
+      show_legend();
       if(zoom == true){
-	       auto_zoom();
+         auto_zoom();
       };
       zoom=false;
       add_node_listener();
@@ -107,8 +107,7 @@ function load() {
 function init() {
  var slider = document.getElementById("myRange");
  slider.oninput = function() {
-        document.getElementById('traceGraph').style.zoom = this.value / 100;
-    	console.log(this.value);
+    document.getElementById('traceGraph').style.zoom = this.value / 100;
   };
   const apiKey = localStorage.getItem('apiKey') || '';
   document.getElementById('apiKey').value = apiKey;
@@ -129,29 +128,29 @@ var dimension = 'Service';
 
 //called when building string for Viz
 function colour_node(event){
-	var colour = service_colours[unique_fields.indexOf(event[dimension])]
+  var colour = service_colours[unique_fields.indexOf(event[dimension])]
 
   //special casing since not every event reports Service KV
   if(dimension == 'Service'){
 
-  	if(colour == undefined && thread_colours[event.tid] == undefined  ){
-  		colour = last_colour;
-  	}
-  	else if (colour == undefined && event.tid != undefined){
-  		colour = thread_colours[event.tid];
-  	}
-  	else if (colour != undefined && event.tid != undefined){
-  		thread_colours[event.tid] = colour;
-  	}
-  	last_colour = colour;
-  	last_thread = event.tid;
+    if(colour == undefined && thread_colours[event.tid] == undefined  ){
+      colour = last_colour;
+    }
+    else if (colour == undefined && event.tid != undefined){
+      colour = thread_colours[event.tid];
+    }
+    else if (colour != undefined && event.tid != undefined){
+      thread_colours[event.tid] = colour;
+    }
+    last_colour = colour;
+    last_thread = event.tid;
 
-  	return colour
+    return colour
   }
 
   else{
     if(colour == undefined ){
-  		colour = 'gray';
+      colour = 'gray';
       return colour;
     }
     else{
@@ -167,29 +166,29 @@ function onlyUnique(value, index, self) {
 
 //use these for all colours
 service_colours = ['#81ecec','#74b9ff','#fd79a8','yellow','#e17055','#00b894',
-      '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
-		  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
-		  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
-		  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
-		  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
-		  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
-		  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
-		  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
-		  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
-		  '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF']
+  '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
+  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
+  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
+  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
+  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
+  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
+  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
+  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
+  '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF']
 
 
 
 //loop through all events, and create an array out of unique field values
 function fields_to_array(events,field){
   legend =[];
-	i=events.length;
+  i=events.length;
 
-	while (i--) {
-   	if (events[i].fields[field]){
-   		legend.push(events[i].fields[field]);
-	   		}
-   	}
+  while (i--) {
+    if (events[i].fields[field]){
+      legend.push(events[i].fields[field]);
+    }
+  }
   unique_fields = legend.filter( onlyUnique );
 }
 
@@ -210,47 +209,47 @@ function show_legend(){
   newElement.innerHTML = dimension
 
 
-	for (var c in unique_fields) {
+  for (var c in unique_fields) {
     var newElement = document.createElement('div');
-	  colour = service_colours[unique_fields.indexOf(unique_fields[c])];
+    colour = service_colours[unique_fields.indexOf(unique_fields[c])];
 
     //create row / field
     newElement.id = unique_fields[c]; newElement.className = "service";
-	  newElement.style = 'padding:10px;position:relative;border-bottom:1px solid rgb(221, 221, 221)';
+    newElement.style = 'padding:10px;position:relative;border-bottom:1px solid rgb(221, 221, 221)';
     document.getElementById('Legend').appendChild(newElement);
 
     //add coloured box
-	  var newElement = document.createElement('div');
+    var newElement = document.createElement('div');
     newElement.id = unique_fields[c]+'color_box'; newElement.className = "color box"; newElement.style = 'float:left;width:10px;height:10px;margin-top:5px;margin-right:10px;background:'+ colour;
-	  document.getElementById(unique_fields[c]).appendChild(newElement);
+    document.getElementById(unique_fields[c]).appendChild(newElement);
 
     //add field name
-	  var newElement = document.createElement('span');
+    var newElement = document.createElement('span');
     newElement.id = unique_fields[c]+'name'; newElement.className = "service_name"; newElement.style = 'width:auto;text-indent:10px;'
     newElement.innerHTML = unique_fields[c];
-	  document.getElementById(unique_fields[c]).appendChild(newElement);
-    };
+    document.getElementById(unique_fields[c]).appendChild(newElement);
+  };
 
 }
 
 // because I don't know how SVGs work
 function auto_zoom(){
-	var graph_0_w = document.getElementById('graph0').getBoundingClientRect().width;
-	var graph_0_h = document.getElementById('graph0').getBoundingClientRect().height;
-	var traceGraph_w = document.getElementById('graph_container').getBoundingClientRect().width;
-	var traceGraph_h = document.getElementById('graph_container').getBoundingClientRect().height;
+  var graph_0_w = document.getElementById('graph0').getBoundingClientRect().width;
+  var graph_0_h = document.getElementById('graph0').getBoundingClientRect().height;
+  var traceGraph_w = document.getElementById('graph_container').getBoundingClientRect().width;
+  var traceGraph_h = document.getElementById('graph_container').getBoundingClientRect().height;
 
-	w_ratio = (traceGraph_w * .9) / graph_0_w
-	h_ratio = (traceGraph_h * .9) / graph_0_h;
+  w_ratio = (traceGraph_w * .9) / graph_0_w
+  h_ratio = (traceGraph_h * .9) / graph_0_h;
 
-	if(w_ratio < h_ratio){
-		document.getElementById('traceGraph').style.zoom = w_ratio;
-		document.getElementById('myRange').value = w_ratio * 100;
-	}
-	else{
-		document.getElementById('traceGraph').style.zoom = h_ratio;
-		document.getElementById('myRange').value = h_ratio * 100;
-	}
+  if(w_ratio < h_ratio){
+    document.getElementById('traceGraph').style.zoom = w_ratio;
+    document.getElementById('myRange').value = w_ratio * 100;
+  }
+  else{
+    document.getElementById('traceGraph').style.zoom = h_ratio;
+    document.getElementById('myRange').value = h_ratio * 100;
+  }
 };
 
 //pops up legend with all KVs when you click on a node
@@ -264,14 +263,14 @@ function add_node_listener(){
         console.log(data_from_table[0].innerHTML);
         document.getElementById('details').innerHTML = data_from_table[0].innerHTML;
         document.getElementById('details').style.display = 'block';
-
     });
-}
+  }
 }
 
 //toggle between chart and raw list of events
 function switch_views(){
   if( document.getElementById('eventTables').style.display != 'block'){
+
     document.getElementById('graph_container').style.display = 'none';
 
     document.getElementById('eventTables').style.display = 'block';
@@ -295,19 +294,19 @@ function check_missing(){
        layer = global_events[i].fields.Layer
        label = global_events[i].fields.Label
 
-  	   if(!layer_counts[layer]){
-     		 layer_counts[layer] = {};
+       if(!layer_counts[layer]){
+         layer_counts[layer] = {};
        }
-  	   if(label){
+       if(label){
          if(layer_counts[layer][label]){
-       		 layer_counts[layer][label] = layer_counts[layer][label] +1;
-       	 }
-       	 else{
-       	   layer_counts[layer][label] = 1;
-       	 }
-  	   }
-     	}
+           layer_counts[layer][label] = layer_counts[layer][label] +1;
+         }
+         else{
+           layer_counts[layer][label] = 1;
+         }
+       }
     }
+  }
     error_string ='';
     missing = 0;
     for (i in layer_counts){
@@ -324,8 +323,6 @@ function check_missing(){
     }
 
 }
-
-
 
 
 
