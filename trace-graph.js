@@ -90,7 +90,6 @@ function load() {
   ).then(
     events => {
       global_events = events;
-      console.log(events)
       fields_to_array(events,dimension);
       graph.innerHTML = svg(events);
       eventTablesDiv.innerHTML = eventTables(events);
@@ -260,7 +259,6 @@ function add_node_listener(){
     nodes[i].addEventListener('click', function(event) {
         selected_node = this.firstElementChild.textContent;
         data_from_table = document.getElementsByName(selected_node);
-        console.log(data_from_table[0].innerHTML);
         document.getElementById('details').innerHTML = data_from_table[0].innerHTML;
         document.getElementById('details').style.display = 'block';
     });
@@ -321,6 +319,7 @@ function check_missing(){
     else{
       alert('Seems OK. Check console for event counts');
     }
+    console.log(layer_counts);
 
 }
 
