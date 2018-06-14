@@ -34,7 +34,7 @@ const nodeParts = start => evt => ({
   HostHostname: evt.fields.HostHostname,
   HostInstanceId: evt.fields.HostInstanceId,
   HostAZ: evt.fields.HostAZ,
-  tid: evt.fields.TID,
+  TID: evt.fields.TID,
   Query: evt.fields.Query,
   RemoteURL: evt.fields.RemoteURL,
   Latency: evt.fields.latency,
@@ -140,17 +140,17 @@ function colour_node(event){
   //special casing since not every event reports Service KV
   if(dimension == 'Service'){
 
-    if(colour == undefined && thread_colours[event.tid] == undefined  ){
+    if(colour == undefined && thread_colours[event.TID] == undefined  ){
       colour = last_colour;
     }
-    else if (colour == undefined && event.tid != undefined){
-      colour = thread_colours[event.tid];
+    else if (colour == undefined && event.TID != undefined){
+      colour = thread_colours[event.TID];
     }
-    else if (colour != undefined && event.tid != undefined){
-      thread_colours[event.tid] = colour;
+    else if (colour != undefined && event.TID != undefined){
+      thread_colours[event.TID] = colour;
     }
     last_colour = colour;
-    last_thread = event.tid;
+    last_thread = event.TID;
 
     colour = fade(colour, opacity);
     return colour
