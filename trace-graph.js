@@ -130,6 +130,7 @@ var services = [];
 var layers =[];
 var legend = [];
 var dimension = 'Service';
+fade_by_latency = false;
 
 //called when building string for Viz
 function colour_node(event){
@@ -152,7 +153,6 @@ function colour_node(event){
     last_thread = event.tid;
 
     colour = fade(colour, opacity);
-    //console.log(colour)
     return colour
   }
 
@@ -169,9 +169,11 @@ function colour_node(event){
 }
 
 function fade(color1,ratio) {
+  if (fade_by_latency != true){
+	  return color1
+  }
   color1 = color1.slice(1)
-  //console.log(color1)
-  color2 = '171f22'
+  color2 = '171f22' //background colour
   var hex = function(x) {
     x = x.toString(16);
     return (x.length == 1) ? '0' + x : x;
@@ -308,6 +310,7 @@ function add_node_listener(){
 
 //toggle between chart and raw list of events
 function switch_views(){
+	document.getElementById('details').style.display='none';
   if( document.getElementById('eventTables').style.display != 'block'){
 
     document.getElementById('graph_container').style.display = 'none';
@@ -485,7 +488,19 @@ function percentRank(array, n) {
 
     return pct
 }
+function latency_toggle() {
+	if (fade_by_latency == false){
+		fade_by_latency = true;
+		document.getElementById('latency').style['background-color']='hsla(197,72%,38%,1.00)'
+		load()
+	}
+	else{
+		fade_by_latency = false;
+		document.getElementById('latency').style['background-color']='transparent';
+		load();
+	}
 
+}
 window.onload = function() {
   init();
   //doSomethingElse();
