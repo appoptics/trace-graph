@@ -363,7 +363,7 @@ function check_missing(){
     else{
       alert('Seems OK. Check console for event counts');
     }
-    //console.log(layer_counts);
+    console.log(layer_counts);
 
 }
 
@@ -398,10 +398,8 @@ function calculate_latency(){
     if (timestamps[events[i].fields.op_id] != undefined){
       if(timestamps[events[i].fields.op_id].latency != undefined ){
         max_latency = timestamps[events[i].fields.op_id].latency
-        console.log('max_latencyA')
       }
       else{
-        console.log('max_latencyB')
         //max_latency = timestamps[events[i].fields.op_id].latency
         max_latency = 0;
       }
@@ -419,15 +417,8 @@ function calculate_latency(){
         if( latency >  max_latency){
           timestamps[events[i].fields.op_id]['latency'] = latency;
           events[i].fields.latency = latency;
-          console.log('op_id'+events[i].fields.op_id)
-          console.log(events[i].edge[i2])
-          console.log(timestamps[events[i].edge[i2]].latency)
-          console.log(latency)
-          console.log(max_latency)
           if(latency > timestamps[events[i].edge[i2]].latency || !timestamps[events[i].edge[i2]].latency){
-            console.log('setting upstream latency');
             timestamps[events[i].edge[i2]].latency = latency;
-            console.log(timestamps[events[i].edge[i2]].latency)
           }
           latency_array.push(latency);
         }
@@ -436,18 +427,11 @@ function calculate_latency(){
   }
   i=events.length;
   while (i--) {
-    console.log('start)')
     latency = events[i].fields.latency
     max_latency = timestamps[events[i].fields.op_id].latency
-    console.log(latency)
-    console.log(max_latency)
-    console.log(events[i].fields.op_id)
     if (max_latency > latency || latency == undefined){
-      console.log('increasing latency!')
       global_events[i].fields.latency = max_latency
-      console.log(events[i].fields.latency)
    }
-   console.log('end')
 }
 }
 
