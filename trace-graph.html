@@ -28,11 +28,12 @@
   <button type="button" class='button2' onClick="dimension='HostHostname';load();">Hostname</button>
   <button type="button" class='button2' onClick="dimension='HostInstanceId';load();">InstanceId</button>
   <button type="button" class='button2' onClick="dimension='HostAZ';load();">AZ</button>
+  <button id="latency" type="button" class='button2' onClick="latency_toggle();">Latency</button>
   <div class="slidecontainer"  style="margin-bottom:50px">
   <input type="range" min="0" max="100" value="50" id="myRange">
   </div>
   <div id="Legend" style="border-radius:2px;padding:0px;position:fixed;z-index:500;top:20px;right:20px;width:20%;height:auto;background:#fff"> </div>
-  <div id="details" onclick="document.getElementById('details').style.display='none'" style="overflow:auto;border-radius:2px;padding:0px;position:fixed;z-index:500;top:300px;right:20px;width:20%;height:auto;background:#fff"> </div>
+  <div id="details" onclick="document.getElementById('details').style.display='none'" style="overflow:auto;border-radius:2px;padding:0px;position:fixed;z-index:500;top:300px;right:20px;width:30%;bottom:40px;background:#fff;display:none"> </div>
   <div id="graph_container" style="border-style: solid;z-index:2;position:absolute;top:150px;bottom:0px;left:0px;right:0px;overflow:auto;margin:10px;padding:40px">
   <div id="traceGraph" style="z-index:2;position:relative;height:100%;width:100%;background:#171f22;zoom:.75"></div>
 </div>

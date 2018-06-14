@@ -14,7 +14,7 @@ const headersForBasicAuth = R.compose(
   apiKey => 'token:'+apiKey
 );
 
-const edge = child => parent => `"${parent}" -> "${child}" [dir=right color="orange"];`;
+const edge = child => parent => `"${parent}" -> "${child}" [dir=right color="${colour_arrows(parent,child)}"];`;
 const edges = R.compose(
   R.unnest,
   R.map(evt => R.map(edge(evt.fields.op_id), evt.edge)),
@@ -24,7 +24,7 @@ const edges = R.compose(
 
 const startTs = evts => parseInt(evts[0].fields.Timestamp_u, 10);
 const nodeString = parts =>
-  `"${parts.id}" [URL="#${parts.opId}", shape=box,style=filled,color="${colour_node(parts)}", fontsize=10, label="${parts.Layer}: ${parts.Label}\n${parts.duration}ms"];`;
+  `"${parts.id}" [URL="#${parts.opId}", shape=${shape_node(parts)},style=filled,color="${colour_node(parts)}", fontsize=10, label="${parts.Layer}: ${parts.Label}\n${parts.duration}ms"];`;
 const nodeParts = start => evt => ({
   id: evt.fields.op_id,
   Layer: evt.fields.Layer,
@@ -35,6 +35,9 @@ const nodeParts = start => evt => ({
   HostInstanceId: evt.fields.HostInstanceId,
   HostAZ: evt.fields.HostAZ,
   tid: evt.fields.TID,
+  Query: evt.fields.Query,
+  RemoteURL: evt.fields.RemoteURL,
+  Latency: evt.fields.latency,
   duration: (parseInt(evt.fields.Timestamp_u, 10) - start)/1000,
 });
 const node = start => R.compose(nodeString, nodeParts(start));
@@ -90,6 +93,9 @@ function load() {
   ).then(
     events => {
       global_events = events;
+      time_stamps();
+      calculate_latency();
+      normalize_latency();
       fields_to_array(events,dimension);
       graph.innerHTML = svg(events);
       eventTablesDiv.innerHTML = eventTables(events);
@@ -124,10 +130,12 @@ var services = [];
 var layers =[];
 var legend = [];
 var dimension = 'Service';
+fade_by_latency = false;
 
 //called when building string for Viz
 function colour_node(event){
   var colour = service_colours[unique_fields.indexOf(event[dimension])]
+  opacity = latency_to_opacity(event['Latency'])
 
   //special casing since not every event reports Service KV
   if(dimension == 'Service'){
@@ -144,6 +152,7 @@ function colour_node(event){
     last_colour = colour;
     last_thread = event.tid;
 
+    colour = fade(colour, opacity);
     return colour
   }
 
@@ -153,8 +162,42 @@ function colour_node(event){
       return colour;
     }
     else{
+      colour = fade(colour, opacity);
       return colour;
     }
+  }
+}
+
+function fade(color1,ratio) {
+  if (fade_by_latency != true){
+	  return color1
+  }
+  color1 = color1.slice(1)
+  color2 = '171f22' //background colour
+  var hex = function(x) {
+    x = x.toString(16);
+    return (x.length == 1) ? '0' + x : x;
+  };
+
+  var r = Math.ceil(parseInt(color1.substring(0,2), 16) * ratio + parseInt(color2.substring(0,2), 16) * (1-ratio));
+  var g = Math.ceil(parseInt(color1.substring(2,4), 16) * ratio + parseInt(color2.substring(2,4), 16) * (1-ratio));
+  var b = Math.ceil(parseInt(color1.substring(4,6), 16) * ratio + parseInt(color2.substring(4,6), 16) * (1-ratio));
+
+  var middle = hex(r) + hex(g) + hex(b);
+  return '#'+middle
+}
+
+
+
+function shape_node(event){
+  if(event['Query']){
+    return 'cylinder'
+  }
+  else if(event['RemoteURL']){
+    return 'cds'
+  }
+  else{
+    return 'box'
   }
 }
 
@@ -267,6 +310,7 @@ function add_node_listener(){
 
 //toggle between chart and raw list of events
 function switch_views(){
+	document.getElementById('details').style.display='none';
   if( document.getElementById('eventTables').style.display != 'block'){
 
     document.getElementById('graph_container').style.display = 'none';
@@ -319,12 +363,144 @@ function check_missing(){
     else{
       alert('Seems OK. Check console for event counts');
     }
-    console.log(layer_counts);
+    //console.log(layer_counts);
 
+}
+
+var timestamps= {};
+var latency_array = [];
+
+function time_stamps(){
+  events = global_events;
+  i=events.length;
+
+  while (i--) {
+    if (events[i].fields['op_id']){
+      timestamps[events[i].fields['op_id']] = {};
+      timestamps[events[i].fields['op_id']]['timestamp'] = events[i].fields.Timestamp_u;
+    }
+  }
+}
+
+function colour_arrows(parent,child){
+  x = timestamps[child].timestamp - timestamps[parent].timestamp ;
+  x=latency_to_opacity(x)
+  colour = fade('#FFA500',x)
+  return colour
+}
+
+function calculate_latency(){
+  events= global_events
+  i=events.length;
+
+  while (i--) {
+
+    if (timestamps[events[i].fields.op_id] != undefined){
+      if(timestamps[events[i].fields.op_id].latency != undefined ){
+        max_latency = timestamps[events[i].fields.op_id].latency
+        console.log('max_latencyA')
+      }
+      else{
+        console.log('max_latencyB')
+        //max_latency = timestamps[events[i].fields.op_id].latency
+        max_latency = 0;
+      }
+
+    }
+    else{
+      //console.log(timestamps[events[i].fields.op_id])
+      max_latency = 0;
+    }
+    if (events[i].fields['op_id']){
+      i2 = events[i].edge.length
+      //loop through all events
+      while(i2--){
+        latency = events[i].fields.Timestamp_u - timestamps[events[i].edge[i2]].timestamp
+        if( latency >  max_latency){
+          timestamps[events[i].fields.op_id]['latency'] = latency;
+          events[i].fields.latency = latency;
+          console.log('op_id'+events[i].fields.op_id)
+          console.log(events[i].edge[i2])
+          console.log(timestamps[events[i].edge[i2]].latency)
+          console.log(latency)
+          console.log(max_latency)
+          if(latency > timestamps[events[i].edge[i2]].latency || !timestamps[events[i].edge[i2]].latency){
+            console.log('setting upstream latency');
+            timestamps[events[i].edge[i2]].latency = latency;
+            console.log(timestamps[events[i].edge[i2]].latency)
+          }
+          latency_array.push(latency);
+        }
+      }
+    }
+  }
+  i=events.length;
+  while (i--) {
+    console.log('start)')
+    latency = events[i].fields.latency
+    max_latency = timestamps[events[i].fields.op_id].latency
+    console.log(latency)
+    console.log(max_latency)
+    console.log(events[i].fields.op_id)
+    if (max_latency > latency || latency == undefined){
+      console.log('increasing latency!')
+      global_events[i].fields.latency = max_latency
+      console.log(events[i].fields.latency)
+   }
+   console.log('end')
+}
 }
 
 
 
+ratio = 0
+function normalize_latency(){
+  ratio = Math.max.apply(Math, latency_array) / 100;
+}
+
+function latency_to_opacity(latency){
+  x = percentRank(latency_array,latency)
+  x = (Math.round(x * 100) / 100)
+  y = (latency / ratio) / 100
+  y = (x + y) / 2
+  if (!y){
+    y = .05
+  }
+  return y
+}
+
+function percentRank(array, n) {
+    var L = 0;
+    var S = 0;
+    var N = array.length
+
+    for (var i = 0; i < array.length; i++) {
+        if (array[i] < n) {
+            L += 1
+        } else if (array[i] === n) {
+            S += 1
+        } else {
+
+        }
+    }
+
+    var pct = (L + (0.5 * S)) / N
+
+    return pct
+}
+function latency_toggle() {
+	if (fade_by_latency == false){
+		fade_by_latency = true;
+		document.getElementById('latency').style['background-color']='hsla(197,72%,38%,1.00)'
+		load()
+	}
+	else{
+		fade_by_latency = false;
+		document.getElementById('latency').style['background-color']='transparent';
+		load();
+	}
+
+}
 window.onload = function() {
   init();
   //doSomethingElse();
