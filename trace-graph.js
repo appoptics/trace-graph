@@ -14,7 +14,7 @@ const headersForBasicAuth = R.compose(
   apiKey => 'token:'+apiKey
 );
 
-const edge = child => parent => `"${parent}" -> "${child}" [dir=right color="${colour_arrows(parent,child)}"];`;
+const edge = child => parent => `"${parent}" -> "${child}" [dir=right color="${colour_arrows(parent,child)}" penwidth=${arrow_width(parent,child)} ]`;
 const edges = R.compose(
   R.unnest,
   R.map(evt => R.map(edge(evt.fields.op_id), evt.edge)),
@@ -31,24 +31,24 @@ const nodeParts = start => evt => ({
   Label: evt.fields.Label,
   opId: evt.fields.op_id,
   Service: evt.fields.Service,
-  HostHostname: evt.fields.HostHostname,
+  Hostname: evt.fields.Hostname,
   HostInstanceId: evt.fields.HostInstanceId,
   HostAZ: evt.fields.HostAZ,
   TID: evt.fields.TID,
   Query: evt.fields.Query,
   RemoteURL: evt.fields.RemoteURL,
   Latency: evt.fields.latency,
+  Timestamp: evt.fields.Timestamp_u,
   duration: (parseInt(evt.fields.Timestamp_u, 10) - start)/1000,
 });
 const node = start => R.compose(nodeString, nodeParts(start));
 const nodes = evts => R.map(node(startTs(evts)), evts);
 
 
-
 const svg = R.compose(
   svgString => svgString.substr(svgString.indexOf('<svg')),
   Viz,
-  s => `digraph { rankdir=LR; style=filled; color=red; bgcolor="#171f22"; ${s} }`,
+  s => `digraph { `+ group_string + `  rankdir=LR; style=filled; color=red; bgcolor="#171f22"; ${s} }`,
   R.join(" "),
   evts => nodes(evts).concat(edges(evts)),
   // sort root first, then by timestamp
@@ -96,7 +96,10 @@ function load() {
       time_stamps();
       calculate_latency();
       normalize_latency();
+	  normalize_timestamps();
       fields_to_array(events,dimension);
+	  prep_groups(events,dimension);
+
       graph.innerHTML = svg(events);
       eventTablesDiv.innerHTML = eventTables(events);
       show_legend();
@@ -131,11 +134,16 @@ var layers =[];
 var legend = [];
 var dimension = 'Service';
 fade_by_latency = false;
+fade_by_timestamp = false;
+
 
 //called when building string for Viz
 function colour_node(event){
   var colour = service_colours[unique_fields.indexOf(event[dimension])]
   opacity = latency_to_opacity(event['Latency'])
+  if (fade_by_timestamp ==true){
+    opacity = timestamp_to_opacity(event['Timestamp'])
+  }
 
   //special casing since not every event reports Service KV
   if(dimension == 'Service'){
@@ -168,8 +176,8 @@ function colour_node(event){
   }
 }
 
-function fade(color1,ratio) {
-  if (fade_by_latency != true){
+function fade(color1,temp_ratio) {
+  if (fade_by_latency != true && fade_by_timestamp != true){
 	  return color1
   }
   color1 = color1.slice(1)
@@ -179,9 +187,11 @@ function fade(color1,ratio) {
     return (x.length == 1) ? '0' + x : x;
   };
 
-  var r = Math.ceil(parseInt(color1.substring(0,2), 16) * ratio + parseInt(color2.substring(0,2), 16) * (1-ratio));
-  var g = Math.ceil(parseInt(color1.substring(2,4), 16) * ratio + parseInt(color2.substring(2,4), 16) * (1-ratio));
-  var b = Math.ceil(parseInt(color1.substring(4,6), 16) * ratio + parseInt(color2.substring(4,6), 16) * (1-ratio));
+
+
+  var r = Math.ceil(parseInt(color1.substring(0,2), 16) * temp_ratio + parseInt(color2.substring(0,2), 16) * (1-temp_ratio));
+  var g = Math.ceil(parseInt(color1.substring(2,4), 16) * temp_ratio + parseInt(color2.substring(2,4), 16) * (1-temp_ratio));
+  var b = Math.ceil(parseInt(color1.substring(4,6), 16) * temp_ratio + parseInt(color2.substring(4,6), 16) * (1-temp_ratio));
 
   var middle = hex(r) + hex(g) + hex(b);
   return '#'+middle
@@ -231,7 +241,78 @@ function fields_to_array(events,field){
       legend.push(events[i].fields[field]);
     }
   }
+  i=events.length;
+  while( i--){
+    if(field == 'Service'){
+	  console.log(i)
+	  console.log(events[i])
+  	  if(events[i].fields.RemoteURL && events[i].fields.Label == 'exit'){
+  		  domain = extractDomain(events[i].fields.RemoteURL)
+  		  events[i].fields.Service = domain
+  		  legend.push(events[i].fields[field]);
+  	  }
+    }
+
+  }
   unique_fields = legend.filter( onlyUnique );
+}
+
+function extractDomain(url) {
+    var hostname;
+    //find & remove protocol (http, ftp, etc.) and get hostname
+
+    if (url.indexOf("//") > -1) {
+        hostname = url.split('/')[2];
+    }
+    else {
+        hostname = url.split('/')[0];
+    }
+
+    //find & remove port number
+    hostname = hostname.split(':')[0];
+    //find & remove "?"
+    hostname = hostname.split('?')[0];
+
+    return hostname;
+}
+
+var group_string = '';
+
+temp_val = '';
+const temp_string = R.compose(
+s => `subgraph ` +  temp_val + ` {rankdir=LR; fontcolor="#FFFFFF"; margin=50;pad=50;fontsize=40; color="#FFFFFF"; bgcolor="#171f22" label="` + label + `"; ${s} } `,
+R.join(" "),
+evts => nodes(evts),
+// sort root first, then by timestamp
+R.sort(evt => evt.edge.length == 0 ? 0 : evt.fields.Timestamp_u),
+//R.filter(belongs,evt),
+);
+
+temp_group =[]
+
+function prep_groups(events,group){
+
+group_string = ''
+
+for (i in unique_fields){
+
+  temp_group = []
+  for (x in events){
+	  if (events[x].fields[group] == unique_fields[i]){
+		  console.log(events[x])
+		  temp_group.push(events[x])
+
+	  }
+  }
+
+
+  temp_val = 'cluster_' + i
+  label = unique_fields[i]
+  new_string = temp_string(temp_group)
+  group_string = group_string + new_string
+
+}
+//console.log(group_string)
 }
 
 //create a colour coded legend
@@ -368,6 +449,7 @@ function check_missing(){
 }
 
 var timestamps= {};
+var timestamps_array = [];
 var latency_array = [];
 
 function time_stamps(){
@@ -375,6 +457,7 @@ function time_stamps(){
   i=events.length;
 
   while (i--) {
+	timestamps_array.push(parseInt(events[i].fields['Timestamp_u']))
     if (events[i].fields['op_id']){
       timestamps[events[i].fields['op_id']] = {};
       timestamps[events[i].fields['op_id']]['timestamp'] = events[i].fields.Timestamp_u;
@@ -384,9 +467,53 @@ function time_stamps(){
 
 function colour_arrows(parent,child){
   x = timestamps[child].timestamp - timestamps[parent].timestamp ;
-  x=latency_to_opacity(x)
-  colour = fade('#FFA500',x)
+  if(fade_by_timestamp == true){
+    x = timestamp_to_opacity(timestamps[child].timestamp)
+  }
+  else{
+    x=latency_to_opacity(x)
+  }
+
+  par_evt = events.find(evt => evt.fields.op_id === parent)
+  chil_evt = events.find(evt => evt.fields.op_id === child)
+
+  if(typeof(par_evt) == 'undefined' || typeof(chil_evt) == 'undefined'){
+	  colour = '#FFA500'
+  }
+
+  if(par_evt.fields.Service == chil_evt.fields.Service){
+	  colour = '#FFA500'
+  }
+  else{
+	  colour = '#FFFFFF'
+  }
+
+  colour = fade(colour,x)
   return colour
+}
+
+function service_match(cur_event) {
+	console.log(cur_event)
+    return cur_event.edge[0] === cur_edge;
+}
+
+function arrow_width(parent,child){
+
+  par_evt = events.find(evt => evt.fields.op_id === parent)
+  chil_evt = events.find(evt => evt.fields.op_id === child)
+
+  if(typeof(par_evt) == 'undefined' || typeof(chil_evt) == 'undefined'){
+	  return 1
+  }
+
+  if(par_evt.fields.Service == chil_evt.fields.Service){
+	  width=1
+  }
+  else{
+	  width=4 + ' style=dashed'
+  }
+  //console.log(cur_service)
+  return width
 }
 
 function calculate_latency(){
@@ -442,6 +569,11 @@ function normalize_latency(){
   ratio = Math.max.apply(Math, latency_array) / 100;
 }
 
+timestamp_ratio = 0
+function normalize_timestamps(){
+  timestamp_ratio = Math.max.apply(Math, timestamps_array) / 100;
+}
+
 function latency_to_opacity(latency){
   x = percentRank(latency_array,latency)
   x = (Math.round(x * 100) / 100)
@@ -450,6 +582,21 @@ function latency_to_opacity(latency){
   if (!y){
     y = .05
   }
+  return y
+}
+
+function timestamp_to_opacity(timestamp){
+  console.log(timestamp)
+  x = percentRank(timestamps_array,timestamp)
+  x = (Math.round(x * 100) / 100)
+  y = (timestamp / timestamp_ratio) / 100
+  y = (x + y) / 2
+  y = Math.pow(y,5)
+  if (!y){
+    y = .01
+  }
+  console.log('opacity')
+  console.log(y)
   return y
 }
 
@@ -467,15 +614,21 @@ function percentRank(array, n) {
 
         }
     }
-
-    var pct = (L + (0.5 * S)) / N
+    if (fade_by_timestamp == true){
+        var pct = (L + (.5 * S)) / N
+    }
+	else{
+		var pct = (L + (0.5 * S)) / N
+	}
 
     return pct
 }
 function latency_toggle() {
 	if (fade_by_latency == false){
 		fade_by_latency = true;
+		fade_by_timestamp=false;
 		document.getElementById('latency').style['background-color']='hsla(197,72%,38%,1.00)'
+		document.getElementById('timestamp').style['background-color']='transparent';
 		load()
 	}
 	else{
@@ -485,6 +638,23 @@ function latency_toggle() {
 	}
 
 }
+
+function timestamp_toggle() {
+	if (fade_by_timestamp == false){
+		fade_by_timestamp = true;
+		document.getElementById('timestamp').style['background-color']='hsla(197,72%,38%,1.00)'
+		fade_by_latency = false;
+		document.getElementById('latency').style['background-color']='transparent';
+		load()
+	}
+	else{
+		fade_by_timestamp = false;
+		document.getElementById('timestamp').style['background-color']='transparent';
+		load();
+	}
+
+}
+
 window.onload = function() {
   init();
   //doSomethingElse();
