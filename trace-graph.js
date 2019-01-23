@@ -48,7 +48,7 @@ const nodes = evts => R.map(node(startTs(evts)), evts);
 const svg = R.compose(
   svgString => svgString.substr(svgString.indexOf('<svg')),
   Viz,
-  s => `digraph { `+ group_string + `  rankdir=LR; style=filled; color=red; bgcolor="#171f22"; ${s} }`,
+  s => `digraph { `+ group_string + `  rankdir=LR; style=filled; color=red; bgcolor="`+ bg_color + `"; ${s} }`,
   R.join(" "),
   evts => nodes(evts).concat(edges(evts)),
   // sort root first, then by timestamp
@@ -136,6 +136,25 @@ var dimension = 'Service';
 fade_by_latency = false;
 fade_by_timestamp = false;
 
+var subgraph_color = '#171f22'
+var bg_color = '#171f22'
+var bg_hex = '171f22'
+var arrow_color = '#FFA500'
+var group_arrow_color = '#EEEEEE'
+
+//use these for all colours
+service_colours = ['#81ecec','#74b9ff','#fd79a8','#ffff99','#e17055','#00b894',
+  '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
+  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
+  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
+  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
+  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
+  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
+  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
+  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
+  '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6']
+
 
 //called when building string for Viz
 function colour_node(event){
@@ -180,8 +199,9 @@ function fade(color1,temp_ratio) {
   if (fade_by_latency != true && fade_by_timestamp != true){
 	  return color1
   }
+
   color1 = color1.slice(1)
-  color2 = '171f22' //background colour
+  color2 = bg_hex //background colour
   var hex = function(x) {
     x = x.toString(16);
     return (x.length == 1) ? '0' + x : x;
@@ -215,20 +235,6 @@ function shape_node(event){
 function onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
 }
-
-//use these for all colours
-service_colours = ['#81ecec','#74b9ff','#fd79a8','yellow','#e17055','#00b894',
-  '#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
-  '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
-  '#80B300', '#809900', '#E6B3B3', '#6680B3', '#66991A',
-  '#FF99E6', '#CCFF1A', '#FF1A66', '#E6331A', '#33FFCC',
-  '#66994D', '#B366CC', '#4D8000', '#B33300', '#CC80CC',
-  '#66664D', '#991AFF', '#E666FF', '#4DB3FF', '#1AB399',
-  '#E666B3', '#33991A', '#CC9999', '#B3B31A', '#00E680',
-  '#4D8066', '#809980', '#E6FF80', '#1AFF33', '#999933',
-  '#FF3380', '#CCCC00', '#66E64D', '#4D80CC', '#9900B3',
-  '#E64D66', '#4DB380', '#FF4D4D', '#99E6E6', '#6666FF']
-
 
 
 //loop through all events, and create an array out of unique field values
@@ -280,7 +286,7 @@ var group_string = '';
 
 temp_val = '';
 const temp_string = R.compose(
-s => `subgraph ` +  temp_val + ` {rankdir=LR; fontcolor="#FFFFFF"; margin=50;pad=50;fontsize=40; color="#FFFFFF"; bgcolor="#171f22" label="` + label + `"; ${s} } `,
+s => `subgraph ` +  temp_val + ` {rankdir=LR; fontcolor="#FFFFFF"; margin=50;pad=50;fontsize=40; color="#FFFFFF"; bgcolor="`+ subgraph_color+ `" label="` + label + `"; ${s} } `,
 R.join(" "),
 evts => nodes(evts),
 // sort root first, then by timestamp
@@ -478,14 +484,14 @@ function colour_arrows(parent,child){
   chil_evt = events.find(evt => evt.fields.op_id === child)
 
   if(typeof(par_evt) == 'undefined' || typeof(chil_evt) == 'undefined'){
-	  colour = '#FFA500'
+	  colour = arrow_color
   }
 
   if(par_evt.fields.Service == chil_evt.fields.Service){
-	  colour = '#FFA500'
+	  colour = arrow_color
   }
   else{
-	  colour = '#FFFFFF'
+	  colour = group_arrow_color
   }
 
   colour = fade(colour,x)
